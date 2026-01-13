@@ -1,0 +1,229 @@
+---
+import PageHead from '@/components/PageHead.astro'
+import Link from '@/components/Link.astro'
+import Layout from '@/layouts/Layout.astro'
+import SocialIcons from '@/components/SocialIcons.astro'
+import { SOCIAL_LINKS } from '@/consts'
+import { Image } from 'astro:assets'
+import profileImage from '../assets/profile.jpeg'
+import { getCollection } from 'astro:content'
+import { Icon } from 'astro-icon/components'
+
+const upcomingUpdates = (await getCollection('updatesUpcoming')).sort(
+  (a, b) => a.data.date.valueOf() - b.data.date.valueOf(),
+)
+const pastUpdates = (await getCollection('updatesPast')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+)
+
+// Show first 1 upcoming and first 2 past on homepage
+const displayedUpcoming = upcomingUpdates.slice(0, 1)
+const displayedPast = pastUpdates.slice(0, 2)
+
+function formatDate(date: Date): string {
+  // Check if it's a placeholder date
+  const year = date.getFullYear()
+  if (year === 2099 || year === 1900) {
+    return '[Date]'
+  }
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function renderUpdateText(
+  text: string,
+  links?: Array<{ text: string; href: string }>,
+) {
+  if (!links || links.length === 0) {
+    return text
+  }
+
+  // Split text by placeholders {0}, {1}, etc. and insert links
+  const parts: Array<string | { text: string; href: string }> = []
+  let lastIndex = 0
+
+  links.forEach((link, index) => {
+    const placeholder = `{${index}}`
+    const placeholderIndex = text.indexOf(placeholder, lastIndex)
+
+    if (placeholderIndex !== -1) {
+      // Add text before placeholder
+      if (placeholderIndex > lastIndex) {
+        parts.push(text.slice(lastIndex, placeholderIndex))
+      }
+      // Add link
+      parts.push(link)
+      lastIndex = placeholderIndex + placeholder.length
+    }
+  })
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex))
+  }
+
+  return parts
+}
+---
+
+<Layout class="max-w-3xl">
+  <PageHead slot="head" title="Home" />
+  <section class="py-8 md:py-12">
+    <div class="clearfix mb-8">
+      <Image
+        src={profileImage}
+        alt="Markus Hofer"
+        class="w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 rounded-full object-cover float-none md:float-right md:ml-8 md:mb-4 md:mt-8 mx-auto md:mx-0 mb-6"
+        loading="eager"
+        fetchpriority="high"
+      />
+      
+      <div class="text-center md:text-left">
+        <h1 class="text-3xl md:text-4xl lg:text-5xl font-medium mb-2">Markus Hofer</h1>
+        <p class="text-muted-foreground text-sm mb-6 md:mb-8">
+          /ˈmɑːkʊs ˈhoʊfər/
+        </p>
+        <div class="space-y-3 md:space-y-4">
+          <p class="text-base md:text-lg">
+            PhD Candidate at Complexity Science Hub
+          </p>
+
+          <section>
+            <p class="text-muted-foreground leading-relaxed">
+              My research explores collective behavior in social systems using statistical physics and network science. I'm particularly interested in opinion dynamics—how opinions form, spread, and polarize on complex networks.            </p>
+          </section>
+          
+          <div class="flex justify-center md:justify-start pt-2">
+            <SocialIcons links={SOCIAL_LINKS} />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-8 mt-12 md:mt-16">
+      <div class="grid grid-cols-1 md:grid-cols-[1.4fr_0.6fr] gap-8 md:gap-12">
+        <section>
+          <h2 class="text-xl font-medium mb-4">Updates</h2>
+          <div class="space-y-6">
+            {displayedUpcoming.length > 0 && (
+              <div>
+                <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">Upcoming</h3>
+                <ul class="space-y-4 text-sm text-muted-foreground">
+                  {displayedUpcoming.map((update) => {
+                    const content = renderUpdateText(update.data.text, update.data.links)
+                    return (
+                      <li class="flex flex-col gap-1 pb-4 border-b border-border/30 last:border-0 last:pb-0">
+                        <span>
+                          {Array.isArray(content) ? (
+                            content.map((part) =>
+                              typeof part === 'string' ? (
+                                part
+                              ) : (
+                                <Link
+                                  href={part.href}
+                                  external
+                                  underline
+                                  class="hover:text-foreground transition-colors"
+                                >
+                                  {part.text}
+                                </Link>
+                              ),
+                            )
+                          ) : (
+                            content
+                          )}
+                        </span>
+                        <time class="text-xs text-muted-foreground tabular-nums">
+                          {formatDate(update.data.date)}
+                        </time>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            )}
+            
+            {displayedPast.length > 0 && (
+              <div>
+                <h3 class="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">Past</h3>
+                <ul class="space-y-4 text-sm text-muted-foreground">
+                  {displayedPast.map((update) => {
+                    const content = renderUpdateText(update.data.text, update.data.links)
+                    return (
+                      <li class="flex flex-col gap-1 pb-4 border-b border-border/30 last:border-0 last:pb-0">
+                        <span>
+                          {Array.isArray(content) ? (
+                            content.map((part) =>
+                              typeof part === 'string' ? (
+                                part
+                              ) : (
+                                <Link
+                                  href={part.href}
+                                  external
+                                  underline
+                                  class="hover:text-foreground transition-colors"
+                                >
+                                  {part.text}
+                                </Link>
+                              ),
+                            )
+                          ) : (
+                            content
+                          )}
+                        </span>
+                        <time class="text-xs text-muted-foreground tabular-nums">
+                          {formatDate(update.data.date)}
+                        </time>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            )}
+            
+            <div class="pt-2">
+              <Link
+                href="/updates"
+                class="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 group"
+              >
+                More
+                <Icon
+                  name="lucide:arrow-right"
+                  class="size-3.5 transition-transform group-hover:translate-x-0.5"
+                />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-medium mb-4">Education</h2>
+          <div class="space-y-4">
+            <div class="pb-4 border-b border-border/30 last:border-0 last:pb-0">
+              <div class="font-medium">PhD in Complexity Science</div>
+              <div class="text-xs text-muted-foreground tabular-nums mt-0.5 mb-1.5">Present</div>
+              <div class="text-sm text-muted-foreground">
+                Medical University of Vienna & Complexity Science Hub
+              </div>
+            </div>
+            
+            <div class="pb-4 border-b border-border/30 last:border-0 last:pb-0">
+              <div class="font-medium">MSc in Physics</div>
+              <div class="text-xs text-muted-foreground tabular-nums mt-0.5 mb-1.5">2022</div>
+              <div class="text-sm text-muted-foreground">University of Copenhagen</div>
+            </div>
+
+            <div class="pb-4 border-b border-border/30 last:border-0 last:pb-0">
+              <div class="font-medium">BSc in Technical Physics</div>
+              <div class="text-xs text-muted-foreground tabular-nums mt-0.5 mb-1.5">2020</div>
+              <div class="text-sm text-muted-foreground">Technical University of Vienna</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+</Layout>

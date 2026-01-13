@@ -1,0 +1,104 @@
+---
+import { Button } from '@/components/ui/button'
+import { Icon } from 'astro-icon/components'
+---
+
+<Button
+  variant="ghost"
+  size="icon"
+  title="Toggle theme"
+  className="theme-toggle -my-2 -me-2 size-8 relative"
+>
+  <Icon name="lucide:sun" class="absolute inset-0 m-auto size-4 dark:hidden" />
+  <Icon name="lucide:moon" class="absolute inset-0 m-auto hidden size-4 dark:block" />
+  <span class="sr-only">Toggle theme</span>
+</Button>
+
+<script is:inline data-astro-rerun>
+  (() => {
+    const theme = (() => {
+      const stored = localStorage?.getItem('theme') ?? ''
+      if (['dark', 'light'].includes(stored)) return stored
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
+    })()
+
+    document.documentElement.setAttribute('data-theme', theme)
+    window.localStorage.setItem('theme', theme)
+
+    // Update theme-color meta tag
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+    if (metaThemeColor) {
+      // We need to wait for the CSS to be available to read the variable
+      // or we can manually map the theme to the color if we want to avoid FOUC logic complexity
+      // But the user asked to match CSS variables.
+      // Since this is inline, styles might not be computed yet.
+      // However, we know the values from global.css
+      const color = theme === 'dark' ? '#171717' : '#ffffff' // oklch(0.145 0 0) approx #171717
+      metaThemeColor.setAttribute('content', color)
+    }
+  })()
+</script>
+
+<script>
+  function updateThemeColor() {
+    const element = document.documentElement
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+    if (metaThemeColor) {
+       // Get the computed style for --background (mapped to background color)
+       // We use a small timeout to ensure class change has applied if needed,
+       // though usually it's immediate for getComputedStyle
+       const bg = getComputedStyle(element).getPropertyValue('--background')
+       // If it returns OKLCH, modern browsers support it in theme-color.
+       // If not, we might need a fallback, but let's assume support or use the fallback logic.
+       // Actually, getComputedStyle might return the resolved value.
+       // Let's try to match the hex values for better compatibility if possible,
+       // but strictly following "match CSS variables" means reading it.
+       metaThemeColor.setAttribute('content', bg)
+    }
+  }
+
+  function handleToggleClick() {
+    const element = document.documentElement
+    const currentTheme = element.getAttribute('data-theme')
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark'
+
+    element.classList.add('[&_*]:transition-none')
+    element.setAttribute('data-theme', newTheme)
+    window.getComputedStyle(element).getPropertyValue('opacity')
+    
+    updateThemeColor()
+
+    requestAnimationFrame(() => {
+      element.classList.remove('[&_*]:transition-none')
+    })
+
+    localStorage.setItem('theme', newTheme)
+  }
+
+
+  function initThemeToggle() {
+    document.querySelectorAll('.theme-toggle').forEach((button) => {
+      button.removeEventListener('click', handleToggleClick)
+      button.addEventListener('click', handleToggleClick)
+    })
+  }
+
+  initThemeToggle()
+
+  document.addEventListener('astro:after-swap', () => {
+    const storedTheme = localStorage.getItem('theme') || 'light'
+    const element = document.documentElement
+
+    element.classList.add('[&_*]:transition-none')
+    window.getComputedStyle(element).getPropertyValue('opacity')
+    element.setAttribute('data-theme', storedTheme)
+
+    requestAnimationFrame(() => {
+      element.classList.remove('[&_*]:transition-none')
+    })
+
+    initThemeToggle()
+  })
+</script>

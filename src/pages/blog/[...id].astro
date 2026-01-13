@@ -1,0 +1,115 @@
+---
+import Breadcrumbs from '@/components/Breadcrumbs.astro'
+import PageHead from '@/components/PageHead.astro'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import Layout from '@/layouts/Layout.astro'
+import { formatDate, readingTime, calculateWordCountFromHtml } from '@/lib/utils'
+import { Icon } from 'astro-icon/components'
+import { getCollection, render } from 'astro:content'
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft)
+  return posts.map((post) => ({
+    params: { id: post.id },
+    props: { post },
+  }))
+}
+
+const { post } = Astro.props
+const { Content } = await render(post)
+
+// Calculate reading time from rendered content
+const wordCount = calculateWordCountFromHtml(post.body || '')
+const postReadingTime = readingTime(wordCount)
+---
+
+<Layout class="max-w-3xl">
+  <PageHead slot="head" title={post.data.title} description={post.data.description} />
+
+  <Breadcrumbs
+    items={[
+      { href: '/', label: 'Home', icon: 'lucide:home' },
+      { label: post.data.title, icon: 'lucide:file-text' },
+    ]}
+  />
+
+  <article class="flex flex-col gap-y-6">
+    <header class="flex flex-col gap-y-4 text-center">
+      <h1 class="text-3xl leading-tight font-medium sm:text-4xl">
+        {post.data.title}
+      </h1>
+
+      <div class="text-muted-foreground flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm">
+        <time datetime={post.data.date.toISOString()}>
+          {formatDate(post.data.date)}
+        </time>
+        <span>{postReadingTime}</span>
+      </div>
+
+      {post.data.tags && post.data.tags.length > 0 && (
+        <div class="flex flex-wrap justify-center gap-2">
+          {post.data.tags.map((tag: string) => (
+            <Badge variant="muted">
+              <Icon name="lucide:hash" class="size-3 mr-1" />
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      )}
+    </header>
+
+    <div class="prose max-w-none">
+      <Content />
+    </div>
+  </article>
+
+  <Button
+    variant="outline"
+    size="icon"
+    className="group fixed right-8 bottom-8 z-50 hidden"
+    id="scroll-to-top"
+    title="Scroll to top"
+    aria-label="Scroll to top"
+  >
+    <Icon
+      name="lucide:arrow-up"
+      class="mx-auto size-4 transition-all group-hover:-translate-y-0.5"
+    />
+  </Button>
+
+  <script>
+    document.addEventListener('astro:page-load', () => {
+      const scrollToTopButton = document.getElementById('scroll-to-top')
+      const footer = document.querySelector('footer')
+
+      if (scrollToTopButton && footer) {
+        scrollToTopButton.addEventListener('click', () => {
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        })
+
+        window.addEventListener('scroll', () => {
+          const footerRect = footer.getBoundingClientRect()
+          const isFooterVisible = footerRect.top <= window.innerHeight
+
+          scrollToTopButton.classList.toggle(
+            'hidden',
+            window.scrollY <= 300 || isFooterVisible,
+          )
+        })
+      }
+    })
+  </script>
+</Layout>
+
+<script>
+  if (document.querySelector('.katex')) {
+    if (!document.querySelector('link[href*="katex.min.css"]')) {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href =
+        'https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css'
+      document.head.appendChild(link)
+    }
+  }
+</script>

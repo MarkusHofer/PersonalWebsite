@@ -1,0 +1,99 @@
+---
+import Breadcrumbs from '@/components/Breadcrumbs.astro'
+import PageHead from '@/components/PageHead.astro'
+import Layout from '@/layouts/Layout.astro'
+import MediaCard from '@/components/MediaCard.astro'
+import Link from '@/components/Link.astro'
+import { Badge } from '@/components/ui/badge'
+import { getCollection } from 'astro:content'
+import { Icon } from 'astro-icon/components'
+
+const mediaItems = await getCollection('media')
+const sortedMedia = mediaItems.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+
+const videos = sortedMedia.filter(item => item.data.type === 'video')
+const articles = sortedMedia.filter(item => item.data.type === 'article')
+
+const formatDate = (date: Date) => {
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+---
+
+<Layout class="max-w-3xl">
+  <PageHead slot="head" title="Press" />
+  <Breadcrumbs items={[{ label: 'Press', icon: 'lucide:newspaper' }]} />
+
+  <section class="flex flex-col gap-y-12">
+    <!-- Articles Section -->
+    {articles.length > 0 && (
+      <section class="flex flex-col gap-y-4">
+        <h2 class="text-xl font-medium">In the News</h2>
+        <ul class="flex flex-col gap-y-4">
+          {articles.map(article => (
+            <li class="group flex flex-col gap-y-0.5 border-b border-border/50 pb-4 last:border-0 last:pb-0">
+              <div class="flex items-center justify-between gap-x-2">
+                <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {article.data.source}
+                </span>
+                <time datetime={article.data.date.toISOString()} class="text-xs text-muted-foreground">
+                  {formatDate(article.data.date)}
+                </time>
+              </div>
+              
+              <div class="flex items-start justify-between gap-4">
+                <Link href={article.data.link} external class="group-hover:text-primary transition-colors">
+                  <h3 class="text-lg font-medium leading-snug flex items-center gap-x-2">
+                    {article.data.title}
+                    <Icon name="lucide:arrow-up-right" class="size-4 opacity-0 -translate-y-1 translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0" />
+                  </h3>
+                </Link>
+                {article.data.language && (
+                  <Badge variant="theme1" className="text-[10px] px-1.5 py-0 h-5 shrink-0 mt-1">
+                    {article.data.language}
+                  </Badge>
+                )}
+              </div>
+              
+              {article.data.description && (
+                <p class="text-sm text-muted-foreground leading-relaxed">
+                  {article.data.description}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    <!-- Videos Section -->
+    {videos.length > 0 && (
+      <section class="flex flex-col gap-y-4">
+        <h2 class="text-xl font-medium">Videos</h2>
+        <div class="flex flex-col gap-4">
+          {videos.map(video => (
+            <MediaCard 
+              title={video.data.title}
+              description={video.data.description}
+              link={video.data.link}
+              youtubeId={video.data.youtubeId}
+              image={video.data.image}
+              date={video.data.date}
+              language={video.data.language}
+              tags={video.data.tags}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+
+    {mediaItems.length === 0 && (
+      <div class="prose">
+        <p>No media content found yet. Check back soon!</p>
+      </div>
+    )}
+  </section>
+</Layout>

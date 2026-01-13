@@ -1,0 +1,162 @@
+---
+import Breadcrumbs from '@/components/Breadcrumbs.astro'
+import PageHead from '@/components/PageHead.astro'
+import Layout from '@/layouts/Layout.astro'
+import Link from '@/components/Link.astro'
+import { getCollection } from 'astro:content'
+
+const upcomingUpdates = await getCollection('updatesUpcoming')
+const pastUpdates = await getCollection('updatesPast')
+
+// Sort upcoming by date ascending (soonest first), past by date descending (most recent first)
+const sortedUpcoming = [...upcomingUpdates].sort((a, b) => {
+  const dateA = a.data.date.valueOf()
+  const dateB = b.data.date.valueOf()
+  return dateA - dateB
+})
+
+const sortedPast = [...pastUpdates].sort((a, b) => {
+  const dateA = a.data.date.valueOf()
+  const dateB = b.data.date.valueOf()
+  return dateB - dateA
+})
+
+function formatDate(date: Date): string {
+  // Check if it's a placeholder date
+  const year = date.getFullYear()
+  if (year === 2099 || year === 1900) {
+    return '[Date]'
+  }
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function renderUpdateText(
+  text: string,
+  links?: Array<{ text: string; href: string }>,
+) {
+  if (!links || links.length === 0) {
+    return text
+  }
+
+  // Split text by placeholders {0}, {1}, etc. and insert links
+  const parts: Array<string | { text: string; href: string }> = []
+  let lastIndex = 0
+
+  links.forEach((link, index) => {
+    const placeholder = `{${index}}`
+    const placeholderIndex = text.indexOf(placeholder, lastIndex)
+
+    if (placeholderIndex !== -1) {
+      // Add text before placeholder
+      if (placeholderIndex > lastIndex) {
+        parts.push(text.slice(lastIndex, placeholderIndex))
+      }
+      // Add link
+      parts.push(link)
+      lastIndex = placeholderIndex + placeholder.length
+    }
+  })
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex))
+  }
+
+  return parts
+}
+---
+
+<Layout class="max-w-3xl">
+  <PageHead slot="head" title="Updates" />
+  <Breadcrumbs items={[{ label: 'Updates', icon: 'lucide:calendar' }]} />
+
+  <section class="flex flex-col gap-y-12">
+    <!-- Upcoming Section -->
+    {sortedUpcoming.length > 0 && (
+      <section class="flex flex-col gap-y-4">
+        <h2 class="text-xl font-medium">Upcoming</h2>
+        <ul class="space-y-4 text-sm text-muted-foreground">
+          {sortedUpcoming.map((update) => {
+            const content = renderUpdateText(update.data.text, update.data.links)
+            return (
+              <li class="flex flex-col gap-1 pb-4 border-b border-border/30 last:border-0 last:pb-0">
+                <span>
+                  {Array.isArray(content) ? (
+                    content.map((part) =>
+                      typeof part === 'string' ? (
+                        part
+                      ) : (
+                        <Link
+                          href={part.href}
+                          external
+                          underline
+                          class="hover:text-foreground transition-colors"
+                        >
+                          {part.text}
+                        </Link>
+                      ),
+                    )
+                  ) : (
+                    content
+                  )}
+                </span>
+                <time class="text-xs text-muted-foreground tabular-nums">
+                  {formatDate(update.data.date)}
+                </time>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
+    )}
+
+    <!-- Past Section -->
+    {sortedPast.length > 0 && (
+      <section class="flex flex-col gap-y-4">
+        <h2 class="text-xl font-medium">Past</h2>
+        <ul class="space-y-4 text-sm text-muted-foreground">
+          {sortedPast.map((update) => {
+            const content = renderUpdateText(update.data.text, update.data.links)
+            return (
+              <li class="flex flex-col gap-1 pb-4 border-b border-border/30 last:border-0 last:pb-0">
+                <span>
+                  {Array.isArray(content) ? (
+                    content.map((part) =>
+                      typeof part === 'string' ? (
+                        part
+                      ) : (
+                        <Link
+                          href={part.href}
+                          external
+                          underline
+                          class="hover:text-foreground transition-colors"
+                        >
+                          {part.text}
+                        </Link>
+                      ),
+                    )
+                  ) : (
+                    content
+                  )}
+                </span>
+                <time class="text-xs text-muted-foreground tabular-nums">
+                  {formatDate(update.data.date)}
+                </time>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
+    )}
+
+    {sortedUpcoming.length === 0 && sortedPast.length === 0 && (
+      <div class="prose">
+        <p>No updates found. Check back soon!</p>
+      </div>
+    )}
+  </section>
+</Layout>

@@ -1,0 +1,123 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@theme inline {
+  --font-sans:
+    Geist, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-mono:
+    Geist Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+
+  /* Theme Colors */
+  --color-theme-1: var(--theme-1);
+  --color-theme-1-foreground: var(--theme-1-foreground);
+  --color-theme-2: var(--theme-2);
+  --color-theme-2-foreground: var(--theme-2-foreground);
+  --color-theme-3: var(--theme-3);
+  --color-theme-3-foreground: var(--theme-3-foreground);
+  --color-theme-4: var(--theme-4);
+  --color-theme-4-foreground: var(--theme-4-foreground);
+}
+
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/GeistVF.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMonoVF.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+
+  /* Scientific / Data Viz Palette (OKLCH) */
+  /* Blue - Language */
+  --theme-1: oklch(0.623 0.17 245.5);
+  --theme-1-foreground: oklch(1 0 0);
+  
+  /* Green - Topic */
+  --theme-2: oklch(0.60 0.15 145);
+  --theme-2-foreground: oklch(1 0 0);
+
+  /* Orange - Category */
+  --theme-3: oklch(0.72 0.18 55);
+  --theme-3-foreground: oklch(0.145 0 0);
+
+  /* Purple - Other */
+  --theme-4: oklch(0.65 0.18 300);
+  --theme-4-foreground: oklch(1 0 0);
+}
+
+[data-theme='dark'] {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --ring: oklch(0.556 0 0);
+
+  /* Adjusted for Dark Mode - slightly lighter/more vibrant */
+  /* Blue - Language (Darker background for white text) */
+  --theme-1: oklch(0.58 0.15 245.5);
+  --theme-1-foreground: oklch(1 0 0);
+  
+  /* Green - Topic (Darker background for white text contrast in dark mode) */
+  --theme-2: oklch(0.55 0.14 145);
+  --theme-2-foreground: oklch(1 0 0);
+
+  --theme-3: oklch(0.78 0.16 55);
+  --theme-3-foreground: oklch(0.145 0 0);
+
+  --theme-4: oklch(0.75 0.16 300);
+  --theme-4-foreground: oklch(0.145 0 0);
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    @apply border-border outline-ring/50 tracking-tight;
+  }
+  
+  html {
+    scrollbar-gutter: stable;
+  }
+}
